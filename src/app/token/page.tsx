@@ -1,11 +1,15 @@
 "use client";
-import React from "react";
-
-import Appbar from "@/components/Appbar";
-import { Balance } from "@/components/Balance";
+import React, { useEffect } from "react";
+import CreateMint from "../CreateMint";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 function token() {
-  return <main></main>;
+  return (
+    <div>
+      <CreateMint />
+    </div>
+  );
 }
 
 export default token;
