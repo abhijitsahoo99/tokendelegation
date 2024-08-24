@@ -1,11 +1,6 @@
 import * as React from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import {
-  PublicKey,
-  Keypair,
-  SystemProgram,
-  Transaction,
-} from "@solana/web3.js";
+import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   createInitializeMintInstruction,
   getMinimumBalanceForRentExemptMint,
@@ -21,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { connect } from "http2";
 
 interface CreateMintProps {
   onMintCreated: (mintAddress: string) => void;
@@ -69,7 +63,7 @@ export default function CreateMint({ onMintCreated }: CreateMintProps) {
 
       const mintAddress = mint.publicKey.toBase58();
       setMessage(`Mint created successfully : ${mintAddress}`);
-      // onMintCreated(mintAddress);
+      onMintCreated(mintAddress);
     } catch (error: any) {
       setMessage(`Error creating mint : ${error.message}`);
     } finally {
@@ -103,7 +97,7 @@ export default function CreateMint({ onMintCreated }: CreateMintProps) {
         <CardFooter>
           <Button className="bg-black text-white" onClick={handleCreateMint}>
             {" "}
-            {isProcessing ? "Processing..." : "Create Mint"}
+            {isProcessing ? "processing..." : "create mint"}
           </Button>
           {message && <p className="mt-2 text-sm">{message}</p>}
         </CardFooter>
