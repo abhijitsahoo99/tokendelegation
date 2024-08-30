@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-interface CreateMintProps {
-  onMintCreated: (mintAddress: string) => void;
+interface mintProps {
+  onMint: (mintAddress: string) => void;
 }
 
-export default function CreateMint({ onMintCreated }: CreateMintProps) {
+export default function CreateMint({ onMint }: mintProps) {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const [decimals, setDecimals] = React.useState<string>("9");
@@ -59,11 +59,16 @@ export default function CreateMint({ onMintCreated }: CreateMintProps) {
       const signature = await sendTransaction(transaction, connection, {
         signers: [mint],
       });
-      await connection.confirmTransaction(signature, "confirmed");
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight
+      }, 'confirmed');
 
       const mintAddress = mint.publicKey.toBase58();
       setMessage(`Mint created successfully : ${mintAddress}`);
-      onMintCreated(mintAddress);
+      onMint(mintAddress);
     } catch (error: any) {
       setMessage(`Error creating mint : ${error.message}`);
     } finally {

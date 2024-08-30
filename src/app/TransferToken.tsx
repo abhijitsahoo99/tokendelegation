@@ -1,10 +1,10 @@
-import * as React from "react";
+import { useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
-  createInitializeMintInstruction,
-  getMinimumBalanceForRentExemptMint,
-  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createTransferInstruction,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +16,74 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-interface MintTokensProps {
+interface TransferTokensProps {
   mintAddress: string;
 }
-export default function TransferToken({ mintAddress }: MintTokensProps) {
-  const [message, setMessage] = React.useState<string>("");
-  const [isProcessing, setIsProcessing] = React.useState(false);
+export default function TransferToken({ mintAddress }: TransferTokensProps) {
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  const [recipient, setRecipient] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleTransferTokens = async () => {
+    if (!publicKey) {
+      setMessage("Wallet not connected");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const mintPublicKey = new PublicKey(mintAddress);
+      const recipientPublicKey = new PublicKey(recipient);
+
+      const sourceAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        publicKey
+      );
+      const destinationAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        recipientPublicKey
+      );
+
+      const transaction = new Transaction();
+
+      const recipientTokenAccountInfo = await connection.getAccountInfo(
+        destinationAccount
+      );
+
+      if (!recipientTokenAccountInfo) {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            publicKey,
+            destinationAccount,
+            recipientPublicKey,
+            mintPublicKey
+          )
+        );
+      }
+
+      transaction.add(
+        createTransferInstruction(
+          sourceAccount,
+          destinationAccount,
+          publicKey,
+          BigInt(amount)
+        )
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setMessage(`Transferred ${amount} tokens to ${recipient}`);
+    } catch (error: any) {
+      setMessage(`Error transferring tokens: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[350px]">
@@ -34,23 +96,29 @@ export default function TransferToken({ mintAddress }: MintTokensProps) {
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Input
-                  type="number"
-                  //   value={decimals}
-                  //   onChange={(e) => setDecimals(e.target.value)}
-                  placeholder="Decimals"
+                  type="text"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  placeholder="Recipient address"
+                  className="mb-4"
                 />
                 <Input
                   type="number"
-                  //   value={decimals}
-                  //   onChange={(e) => setDecimals(e.target.value)}
-                  placeholder="Decimals"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Amount to transfer"
+                  className="mb-4"
                 />
               </div>
             </div>
           </form>
         </CardContent>
         <CardFooter>
-          <Button className="bg-black text-white">
+          <Button
+            onClick={handleTransferTokens}
+            disabled={isProcessing}
+            className="bg-black text-white"
+          >
             {" "}
             {isProcessing ? "processing..." : "transfer tokens"}
           </Button>

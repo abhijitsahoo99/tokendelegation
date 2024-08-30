@@ -1,10 +1,10 @@
-import * as React from "react";
+import { useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import {
-  createInitializeMintInstruction,
-  getMinimumBalanceForRentExemptMint,
-  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createApproveInstruction,
+  createRevokeInstruction,
 } from "@solana/spl-token";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +16,83 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-interface MintTokensProps {
+
+interface DelegateTokenProps {
   mintAddress: string;
 }
-export default function TransferToken({ mintAddress }: MintTokensProps) {
-  const [message, setMessage] = React.useState<string>("");
-  const [isProcessing, setIsProcessing] = React.useState(false);
+
+export default function DelegateToken({ mintAddress }: DelegateTokenProps) {
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  const [delegate, setDelegate] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleDelegateTokens = async () => {
+    if (!publicKey) {
+      setMessage("Wallet not connected");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const mintPublicKey = new PublicKey(mintAddress);
+      const delegatePublicKey = new PublicKey(delegate);
+      const tokenAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        publicKey
+      );
+
+      const transaction = new Transaction().add(
+        createApproveInstruction(
+          tokenAccount,
+          delegatePublicKey,
+          publicKey,
+          BigInt(amount)
+        )
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setMessage(`Delegated ${amount} tokens to ${delegate}`);
+    } catch (error: any) {
+      setMessage(`Error delegating tokens: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRevokeDelegate = async () => {
+    if (!publicKey) {
+      setMessage("Wallet not connected");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const mintPublicKey = new PublicKey(mintAddress);
+      const tokenAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        publicKey
+      );
+
+      const transaction = new Transaction().add(
+        createRevokeInstruction(tokenAccount, publicKey)
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setMessage("Delegation revoked successfully");
+    } catch (error: any) {
+      setMessage(`Error revoking delegation: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[350px]">
@@ -36,16 +107,18 @@ export default function TransferToken({ mintAddress }: MintTokensProps) {
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Input
-                  type="number"
-                  //   value={decimals}
-                  //   onChange={(e) => setDecimals(e.target.value)}
-                  placeholder="Decimals"
+                  type="text"
+                  value={delegate}
+                  onChange={(e) => setDelegate(e.target.value)}
+                  placeholder="Delegate address"
+                  className="mb-4"
                 />
                 <Input
                   type="number"
-                  //   value={decimals}
-                  //   onChange={(e) => setDecimals(e.target.value)}
-                  placeholder="Decimals"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Amount to delegate"
+                  className="mb-4"
                 />
               </div>
             </div>
@@ -53,11 +126,19 @@ export default function TransferToken({ mintAddress }: MintTokensProps) {
         </CardContent>
         <CardFooter>
           <div className="flex justify-between">
-            <Button className="bg-black text-white">
+            <Button
+              onClick={handleDelegateTokens}
+              disabled={isProcessing}
+              className="bg-black text-white"
+            >
               {" "}
               {isProcessing ? "processing..." : "delegate"}
             </Button>
-            <Button className="bg-black text-white">
+            <Button
+              onClick={handleRevokeDelegate}
+              disabled={isProcessing}
+              className="bg-black text-white"
+            >
               {" "}
               {isProcessing ? "processing..." : "revoke"}
             </Button>

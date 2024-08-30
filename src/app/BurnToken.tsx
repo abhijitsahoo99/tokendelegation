@@ -1,10 +1,9 @@
-import * as React from "react";
+import { useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import {
-  createInitializeMintInstruction,
-  getMinimumBalanceForRentExemptMint,
-  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createBurnInstruction,
 } from "@solana/spl-token";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +15,50 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-interface MintTokensProps {
+interface BurnTokenProps {
   mintAddress: string;
 }
-export default function BurnToken({ mintAddress }: MintTokensProps) {
-  const [message, setMessage] = React.useState<string>("");
-  const [isProcessing, setIsProcessing] = React.useState(false);
+export default function BurnToken({ mintAddress }: BurnTokenProps) {
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  const [amount, setAmount] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleBurnTokens = async () => {
+    if (!publicKey) {
+      setMessage("Wallet not connected");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const mintPublicKey = new PublicKey(mintAddress);
+      const tokenAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        publicKey
+      );
+
+      const transaction = new Transaction().add(
+        createBurnInstruction(
+          tokenAccount,
+          mintPublicKey,
+          publicKey,
+          BigInt(amount)
+        )
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setMessage(`Burned ${amount} tokens`);
+    } catch (error: any) {
+      setMessage(`Error burning tokens: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[350px]">
@@ -37,16 +74,21 @@ export default function BurnToken({ mintAddress }: MintTokensProps) {
               <div className="flex flex-col space-y-1.5">
                 <Input
                   type="number"
-                  //   value={decimals}
-                  //   onChange={(e) => setDecimals(e.target.value)}
-                  placeholder="Decimals"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Amount to burn"
+                  className="mb-4"
                 />
               </div>
             </div>
           </form>
         </CardContent>
         <CardFooter>
-          <Button className="bg-black text-white">
+          <Button
+            onClick={handleBurnTokens}
+            disabled={isProcessing}
+            className="bg-black text-white"
+          >
             {" "}
             {isProcessing ? "processing..." : "burn tokens"}
           </Button>
