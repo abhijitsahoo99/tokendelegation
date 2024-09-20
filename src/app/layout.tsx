@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { WalletContextProvider } from "./context/WalletContextProvider";
 
 const gilroy = localFont({
   src: "../../public/fonts/gilroy/Gilroy-Light.ttf",
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${gilroy.variable} ${denton.variable}`}>
-        {children}
+        <WalletContextProvider>{children}</WalletContextProvider>
       </body>
     </html>
   );

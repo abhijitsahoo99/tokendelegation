@@ -18,11 +18,11 @@ function Appbar() {
   };
   return (
     <div>
-      <div className="flex justify-between m-6 mb-0 items-center">
+      <div className="flex justify-between m-6 mb-0 items-center font-denton">
         <Balance />
         <Button
           onClick={handleWalletAction}
-          className="bg-white hover:bg-fuchsia-50 text-black"
+          className="border-2 border-[#ffe4b5] text-lg rounded-xl hover:bg-white hover:text-black text-[#ffe4b5]"
         >
           {publicKey
             ? `${publicKey.toBase58().slice(0, 4)}...${publicKey

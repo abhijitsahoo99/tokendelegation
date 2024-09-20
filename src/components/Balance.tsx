@@ -28,12 +28,12 @@ export const Balance: FC = () => {
   return (
     <div>
       {publicKey ? (
-        <div className="border-2 px-4 py-1 bg-white hover:bg-fuchsia-50 text-black">
+        <div className="border-2 border-[#ffe4b5] text-lg rounded-xl bg-white text-black px-2">
           balance : {balance / LAMPORTS_PER_SOL} SOL{" "}
         </div>
       ) : (
-        <div className="border-2 px-4 py-1 bg-white hover:bg-fuchsia-50 text-black">
-          balance : connect wallet{" "}
+        <div className="border-2 border-[#ffe4b5] text-lg rounded-xl bg-white text-black  px-2">
+          balance : connect wallet to check balance{" "}
         </div>
       )}
     </div>

@@ -1,10 +1,12 @@
-"use client"
+"use client";
+
+import RetroGrid from "@/components/magicui/retro-grid";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 export default function Home() {
-  const router = useRouter()
+  const router = useRouter();
   return (
-    <div className="font-denton text-2xl h-screen flex flex-col justify-center items-center px-6">
+    <div className="font-denton text-2xl h-screen flex flex-col justify-center items-center px-6 relative">
       <div>
         <p className="mb-4">
           welcome to{" "}
@@ -20,6 +22,7 @@ export default function Home() {
           get started
         </Button>
       </div>
+      <RetroGrid />
     </div>
   );
 }
