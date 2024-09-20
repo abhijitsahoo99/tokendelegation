@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
-import { WalletContextProvider } from "./context/WalletContextProvider";
-import Appbar from "@/components/Appbar";
 
-const inter = Inter({ subsets: ["latin"] });
+export const gilroy = localFont({
+  src: "../../public/fonts/gilroy/Gilroy-Light.ttf",
+  variable: "--font-gilroy",
+});
+export const denton = localFont({
+  src: "../../public/fonts/Denton-Font-Family /Denton Test Light 300.otf",
+  variable: "--font-denton",
+});
 
 export const metadata: Metadata = {
   title: "tokendelegration",
@@ -19,11 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <WalletContextProvider>
-          <Appbar />
-          {children}
-        </WalletContextProvider>
+      <body className={`${gilroy.variable} ${denton.variable}`}>
+        {children}
       </body>
     </html>
   );
