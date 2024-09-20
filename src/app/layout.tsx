@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-export const gilroy = localFont({
+const gilroy = localFont({
   src: "../../public/fonts/gilroy/Gilroy-Light.ttf",
   variable: "--font-gilroy",
 });
-export const denton = localFont({
+const denton = localFont({
   src: "../../public/fonts/Denton-Font-Family /Denton Test Light 300.otf",
   variable: "--font-denton",
 });
